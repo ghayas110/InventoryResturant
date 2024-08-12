@@ -20,6 +20,7 @@ const config: Config = {
     },
     extend: {
       colors: {
+        
         current: "currentColor",
         transparent: "transparent",
         white: "#FFFFFF",
