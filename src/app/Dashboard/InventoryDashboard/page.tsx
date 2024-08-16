@@ -1,12 +1,12 @@
 "use client";
 import dynamic from "next/dynamic";
 import React from "react";
-import ChartOne from "../../components/Charts/ChartOne";
-import ChartTwo from "../../components/Charts/ChartTwo";
-import TableOne from "../../components/Tables/TableOne";
-import CardDataStats from "../../components/CardDataStats";
-import DefaultLayout from "../../components/Layouts/DefaultLayout";
-import FastItems from "../../components/FastItems/FastItems";
+import ChartOne from "../../../components/Charts/ChartOne";
+import ChartTwo from "../../../components/Charts/ChartTwo";
+import TableOne from "../../../components/Tables/TableOne";
+import CardDataStats from "../../../components/CardDataStats";
+import DefaultLayout from "../../../components/Layouts/DefaultLayout";
+import FastItems from "../../../components/FastItems/FastItems";
 
 const MapOne = dynamic(() => import("@/components/Maps/MapOne"), {
   ssr: false,

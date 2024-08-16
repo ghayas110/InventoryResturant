@@ -11,7 +11,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 const SignIn: React.FC = () => {
   const router = useRouter();
   const handleSubmit =  () => {
-   router.push("/Dashboard");
+   router.push("/Dashboard/InventoryDashboard");
   };
 
   return (
