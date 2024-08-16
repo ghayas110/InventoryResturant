@@ -79,7 +79,8 @@ const EmployeeManagement: React.FC = () => {
     (employee) =>
       employee.firstName.toLowerCase().includes(searchTerm) ||
       employee.lastName.toLowerCase().includes(searchTerm) ||
-      employee.email.toLowerCase().includes(searchTerm)
+      employee.email.toLowerCase().includes(searchTerm) ||
+      employee.id.toLowerCase().includes(searchTerm)
   );
 
   const handleViewEmployee = (employee: Employee) => {
@@ -87,6 +88,9 @@ const EmployeeManagement: React.FC = () => {
       title: "Employee Details",
       content: (
         <div>
+          <p>
+            <b>Employee ID:</b> {employee.id}
+          </p>
           <p>
             <b>Full Name:</b> {employee.firstName} {employee.lastName}
           </p>
@@ -108,6 +112,11 @@ const EmployeeManagement: React.FC = () => {
   };
 
   const columns = [
+    {
+      title: "Employee ID",
+      dataIndex: "id",
+      key: "id",
+    },
     {
       title: "First Name",
       dataIndex: "firstName",
@@ -196,6 +205,11 @@ const EmployeeManagement: React.FC = () => {
           okButtonProps={{ style: { backgroundColor: "black", color: "white", borderColor: "black" } }}
         >
           <Form form={form} layout="vertical">
+            {isEditMode && (
+              <Form.Item name="id" label="Employee ID">
+                <Input disabled />
+              </Form.Item>
+            )}
             <Form.Item
               name="firstName"
               label="First Name"
