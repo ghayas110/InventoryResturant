@@ -7,22 +7,22 @@ import DefaultLayout from '@/components/Layouts/DefaultLayout';
 interface Order {
   key: string;
   orderCode: string;
-  menuItems: string[];
+  productItems: string[];
   specialRequest: string;
   status: 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';
   price: number;
 }
 
-const menuOptions = [
-  { label: 'Pizza', value: 'Pizza' },
-  { label: 'Burger', value: 'Burger' },
-  { label: 'Pasta', value: 'Pasta' },
-  { label: 'Salad', value: 'Salad' },
+const productOptions = [
+  { label: 'Solar Panel 400W', value: 'Solar Panel 400W' },
+  { label: 'Hybrid Inverter', value: 'Hybrid Inverter' },
+  { label: 'Lithium Battery 5kWh', value: 'Lithium Battery 5kWh' },
+  { label: 'Mounting Cables', value: 'Mounting Cables' },
 ];
 
 const statusOptions = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
 
-const RestaurantOrderPage: React.FC = () => {
+const SolarOrderManagementPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -80,10 +80,10 @@ const RestaurantOrderPage: React.FC = () => {
       key: 'orderCode',
     },
     {
-      title: 'Menu Items',
-      dataIndex: 'menuItems',
-      key: 'menuItems',
-      render: (items: string[]) => items.join(', '),
+      title: 'Product Items',
+      dataIndex: 'productItems',
+      key: 'productItems',
+      render: (items: string[]) => items ? items.join(', ') : '',
     },
     {
       title: 'Special Request',
@@ -141,8 +141,8 @@ const RestaurantOrderPage: React.FC = () => {
             <Form.Item name="orderCode" label="Order Code" rules={[{ required: true, message: 'Please enter the order code' }]}>
               <Input />
             </Form.Item>
-            <Form.Item name="menuItems" label="Menu Items" rules={[{ required: true, message: 'Please select menu items' }]}>
-              <Select mode="multiple" options={menuOptions} />
+            <Form.Item name="productItems" label="Products" rules={[{ required: true, message: 'Please select products' }]}>
+              <Select mode="multiple" options={productOptions} />
             </Form.Item>
             <Form.Item name="specialRequest" label="Special Request">
               <Input />
@@ -168,4 +168,4 @@ const RestaurantOrderPage: React.FC = () => {
   );
 };
 
-export default RestaurantOrderPage;
+export default SolarOrderManagementPage;

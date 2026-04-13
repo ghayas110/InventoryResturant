@@ -5,22 +5,22 @@ import { FastItem } from "@/types/FastItems";
 const fastData: FastItem[] = [
   {
     avatar: "/images/products/s1.png",
-    name: "Mandi",
-    text: "Arabian Dish",
+    name: "Solar Panel 400W",
+    text: "Energy Modules",
     time: 12,
   
   },
   {
     avatar: "/images/products/s3.png",
-    name: "Matghooth",
-    text: "Arabian Dish",
+    name: "Lithium Ion Battery",
+    text: "Energy Storage",
     time: 12,
  
   },
   {
     avatar: "/images/products/s2.png",
-    name: "Kunafah",
-    text: "Arabian Dish",
+    name: "Hybrid Inverter",
+    text: "Power Conversion",
     time: 12,
  
   },
