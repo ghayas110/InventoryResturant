@@ -21,15 +21,15 @@ const SignIn: React.FC = () => {
           <div className="text-center mb-8 flex flex-col items-center">
             <Link className="mb-4 inline-block" href="/">
               <Image
-                src={"/images/logo/koita_logo.png"}
-                alt="Koita Battery Creators Logo"
+                src={"/images/logo/queata_logo.png"}
+                alt="Queata Batery Traders Logo"
                 width={176}
                 height={176}
                 className="mx-auto"
               />
             </Link>
             <h2 className="text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-              Koita Battery Creators
+              Queata Batery Traders
             </h2>
             <p className="mt-2 text-sm text-slate-400 dark:text-gray-400">
               Solar & Battery Inventory Management System
