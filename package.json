@@ -12,6 +12,8 @@
     "@ant-design/icons": "^5.4.0",
     "antd": "^5.20.1",
     "apexcharts": "^3.45.2",
+    "baseline-browser-mapping": "^2.10.20",
+    "caniuse-lite": "^1.0.30001788",
     "flatpickr": "^4.6.13",
     "jsvectormap": "^1.6.0",
     "moment": "^2.30.1",

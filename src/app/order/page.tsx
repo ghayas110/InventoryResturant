@@ -19,6 +19,7 @@ interface Product {
   name: string;
   category: string;
   quantity: number;
+  price: number;
 }
 
 interface Order {
@@ -46,6 +47,8 @@ const SolarOrderPage: React.FC = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [products, setProducts] = useState<Product[]>([]);
+  const [whatsappPhone, setWhatsappPhone] = useState<string>('');
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
 
   const [form] = Form.useForm();
   const [productForm] = Form.useForm();
@@ -142,12 +145,42 @@ const SolarOrderPage: React.FC = () => {
   );
 
   const handleViewInvoice = async (order: Order) => {
-    const pdfDoc = await generateInvoicePDF(order);
-    const pdfBytes = await pdfDoc.save();
-    const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    setPdfUrl(pdfUrl);
+    setCurrentOrder(order);
     setIsInvoiceModalVisible(true);
+    try {
+      const pdfDoc = await generateInvoicePDF(order);
+      const pdfBytes = await pdfDoc.save();
+      const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      setPdfUrl(pdfUrl);
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      message.error("Failed to generate PDF, but you can still send via WhatsApp.");
+    }
+  };
+
+  const handleSendToWhatsapp = () => {
+    if (!whatsappPhone) {
+      message.warning('Please enter a WhatsApp phone number.');
+      return;
+    }
+    if (!currentOrder) return;
+    
+    let totalAmt = 0;
+    currentOrder.products.forEach(p => { totalAmt += (p.price * p.quantity); });
+    
+    let textMessage = `*Invoice for Order: ${currentOrder.orderCode}*\n`;
+    textMessage += `Date: ${currentOrder.orderDate}\n`;
+    textMessage += `Supplier: ${currentOrder.supplier.name} (${currentOrder.supplier.category})\n\n`;
+    textMessage += `*Products:*\n`;
+    currentOrder.products.forEach((p, idx) => {
+        textMessage += `${idx + 1}. ${p.name} (Qty: ${p.quantity}, Price: $${p.price}) - Total: $${p.quantity * p.price}\n`;
+    });
+    textMessage += `\n*Grand Total: $${totalAmt}*\n\n`;
+    textMessage += `Thank you!`;
+    
+    const encodedMessage = encodeURIComponent(textMessage);
+    window.open(`https://wa.me/${whatsappPhone.replace(/[\s+]/g, '')}?text=${encodedMessage}`, '_blank');
   };
 
   const orderColumns = [
@@ -184,7 +217,7 @@ const SolarOrderPage: React.FC = () => {
         <ul>
           {products.map((product, index) => (
             <li key={index}>
-              {product.name} (Category: {product.category}, Quantity: {product.quantity})
+              {product.name} (Category: {product.category}, Qty: {product.quantity}, Price: ${product.price})
             </li>
           ))}
         </ul>
@@ -246,6 +279,11 @@ const SolarOrderPage: React.FC = () => {
       key: 'quantity',
     },
     {
+      title: 'Price ($)',
+      dataIndex: 'price',
+      key: 'price',
+    },
+    {
       title: 'Action',
       key: 'action',
       render: (_: any, record: Product) => (
@@ -264,16 +302,25 @@ const SolarOrderPage: React.FC = () => {
 
     // Embed the font and the logo image
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const logoImage = await fetch(logoUrl).then(res => res.arrayBuffer());
-    const logo = await pdfDoc.embedPng(logoImage);
-
-    // Draw the logo
-    page.drawImage(logo, {
-      x: 450,
-      y: 290,
-      width: 100,
-      height: 80,
-    });
+    
+    try {
+      const logoImage = await fetch(logoUrl).then(res => res.arrayBuffer());
+      let logo;
+      try {
+        logo = await pdfDoc.embedPng(logoImage);
+      } catch (e) {
+        logo = await pdfDoc.embedJpg(logoImage);
+      }
+      // Draw the logo
+      page.drawImage(logo, {
+        x: 450,
+        y: 290,
+        width: 100,
+        height: 80,
+      });
+    } catch (e) {
+      console.error("Could not embed logo image", e);
+    }
 
     const { supplier, products, orderCode, orderDate, orderValidUntil } = order;
 
@@ -314,9 +361,11 @@ const SolarOrderPage: React.FC = () => {
 
     const tableHeaders = [
       { text: 'No.', x: 50 },
-      { text: 'Product Name', x: 100 },
-      { text: 'Category', x: 250 },
-      { text: 'Quantity', x: 450 }
+      { text: 'Product Name', x: 90 },
+      { text: 'Category', x: 230 },
+      { text: 'Qty', x: 380 },
+      { text: 'Price', x: 430 },
+      { text: 'Total', x: 490 }
     ];
 
     tableHeaders.forEach(header => {
@@ -324,34 +373,41 @@ const SolarOrderPage: React.FC = () => {
     });
 
     let yPosition = tableY - 20;
+    let grandTotal = 0;
+    
     products.forEach((product, index) => {
+      const lineTotal = product.quantity * (product.price || 0);
+      grandTotal += lineTotal;
+      
       page.drawText(`${index + 1}`, { x: 50, y: yPosition, size: 12 });
-      page.drawText(product.name, { x: 100, y: yPosition, size: 12 });
-      page.drawText(product.category, { x: 250, y: yPosition, size: 12 });
-      page.drawText(product.quantity.toString(), { x: 450, y: yPosition, size: 12 });
+      page.drawText(product.name, { x: 90, y: yPosition, size: 12 });
+      page.drawText(product.category, { x: 230, y: yPosition, size: 12 });
+      page.drawText(product.quantity.toString(), { x: 380, y: yPosition, size: 12 });
+      page.drawText(`$${product.price}`, { x: 430, y: yPosition, size: 12 });
+      page.drawText(`$${lineTotal}`, { x: 490, y: yPosition, size: 12 });
 
       // Draw table borders
       page.drawLine({
         start: { x: 45, y: yPosition + 10 },
         end: { x: 550, y: yPosition + 10 },
-        thickness: 1,
+        thickness: 0.5,
         color: rgb(0, 0, 0)
       });
       page.drawLine({
         start: { x: 45, y: yPosition - 10 },
         end: { x: 550, y: yPosition - 10 },
-        thickness: 1,
+        thickness: 0.5,
         color: rgb(0, 0, 0)
       });
       yPosition -= 20;
     });
 
     // Draw vertical borders
-    [45, 95, 240, 440, 550].forEach((xPos, index) => {
+    [45, 85, 225, 375, 425, 485, 550].forEach((xPos) => {
       page.drawLine({
         start: { x: xPos, y: tableY + 10 },
         end: { x: xPos, y: yPosition + 10 },
-        thickness: 1,
+        thickness: 0.5,
         color: rgb(0, 0, 0)
       });
     });
@@ -363,9 +419,13 @@ const SolarOrderPage: React.FC = () => {
       thickness: 1,
       color: rgb(0, 0, 0)
     });
+    
+    // Draw Grand Total
+    yPosition -= 20;
+    page.drawText(`Grand Total: $${grandTotal}`, { x: 420, y: yPosition, size: 14, font });
 
     // Add the note at the bottom
-    page.drawText('Note: This is electronically generated by Koita Battery Creators', {
+    page.drawText('Note: This is electronically generated by Koita Battery Traders', {
       x: 50,
       y: 30,
       size: 10,
@@ -446,14 +506,74 @@ const SolarOrderPage: React.FC = () => {
           width={800}
         >
           {pdfUrl && (
-            <iframe
-              src={pdfUrl}
-              width="100%"
-              height="600px"
-              title="Invoice PDF"
-              style={{ border: 'none' }}
-            />
+            <div style={{ marginBottom: 16 }}>
+              <iframe
+                src={pdfUrl}
+                width="100%"
+                height="500px"
+                title="Invoice PDF"
+                style={{ border: 'none', borderBottom: '1px solid #ddd', marginBottom: 16 }}
+              />
+            </div>
           )}
+          
+          <div style={{ padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+            <h4 style={{ marginBottom: '12px' }}>Send Invoice Text via WhatsApp</h4>
+            <p style={{ fontSize: '12px', color: 'gray', marginBottom: '12px' }}>
+              Note: WhatsApp links do not support attaching files directly. This will send a text summary. To send the PDF, download it first or use the manual "Share" feature if your browser supports it.
+            </p>
+            <Space>
+              <Input 
+                placeholder="Phone No with country code (e.g. +1234567890)" 
+                value={whatsappPhone}
+                onChange={(e) => setWhatsappPhone(e.target.value)}
+                style={{ width: '250px' }}
+              />
+              <Button 
+                type="primary" 
+                onClick={handleSendToWhatsapp} 
+                style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
+              >
+                Send Summary
+              </Button>
+              <Button 
+                onClick={async () => {
+                  if (pdfUrl) {
+                     try {
+                        const response = await fetch(pdfUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], `Invoice-${currentOrder?.orderCode || 'Order'}.pdf`, { type: 'application/pdf' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                             await navigator.share({
+                                 title: `Invoice ${currentOrder?.orderCode || ''}`,
+                                 text: 'Here is the attached invoice.',
+                                 files: [file]
+                             });
+                        } else {
+                             message.info("Direct PDF sharing is not supported on this browser. Click 'Download PDF' instead.");
+                        }
+                     } catch (err) {
+                         console.error('Error sharing', err);
+                     }
+                  }
+                }} 
+              >
+                Share File directly
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (pdfUrl) {
+                    const a = document.createElement('a');
+                    a.href = pdfUrl;
+                    a.download = `Invoice-${currentOrder?.orderCode || 'Order'}.pdf`;
+                    a.click();
+                  }
+                }} 
+              >
+                Download PDF
+              </Button>
+            </Space>
+          </div>
         </Modal>
 
         {/* Modal for Adding Products */}
@@ -476,6 +596,9 @@ const SolarOrderPage: React.FC = () => {
               </Select>
             </Form.Item>
             <Form.Item name="quantity" label="Quantity" rules={[{ required: true, message: 'Please enter the quantity' }]}>
+              <InputNumber min={0} />
+            </Form.Item>
+            <Form.Item name="price" label="Price" rules={[{ required: true, message: 'Please enter the price' }]}>
               <InputNumber min={0} />
             </Form.Item>
           </Form>
